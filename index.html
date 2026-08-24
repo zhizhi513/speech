@@ -1,0 +1,1179 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#d97757" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Speech" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23d97757'/><text x='50' y='65' font-size='52' font-weight='700' font-family='Inter,sans-serif' fill='white' text-anchor='middle'>S</text></svg>" />
+    <title>Speech · 即兴演讲练习</title>
+    <meta name="description" content="深度准备 60 秒演讲，附复盘记录" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="manifest" href="manifest.json" />
+    <style>
+:root{
+  --bg:#fafaf7;
+  --surface:#ffffff;
+  --surface-soft:#f5f4ef;
+  --surface-hover:#eeece5;
+  --text:#1a1a1a;
+  --text-muted:#6b6b6b;
+  --text-dim:#9b9b9b;
+  --accent:#d97757;
+  --accent-hover:#c66643;
+  --accent-soft:#fef3ec;
+  --border:#e6e3da;
+  --border-strong:#d4d0c4;
+  --success:#3a8c5a;
+  --success-soft:#e8f3ec;
+  --radius-sm:8px;
+  --radius-md:14px;
+  --radius-lg:24px;
+  --shadow:0 1px 3px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
+  --shadow-lg:0 4px 12px rgba(0,0,0,.08), 0 24px 60px rgba(0,0,0,.10);
+  --sans:"Inter","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --serif:"Noto Serif SC",serif;
+}
+*{box-sizing:border-box}
+html,body,#root{min-height:100svh;margin:0}
+body{font:16px/1.55 var(--sans);color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
+#root{flex-direction:column;align-items:center;padding:32px 24px 48px;display:flex;position:relative}
+.app{flex-direction:column;align-items:stretch;width:100%;max-width:820px;display:flex}
+header{text-align:center;margin-bottom:28px}
+.brand{font-family:var(--serif);letter-spacing:-.02em;margin:0 0 6px;font-size:2.2rem;font-weight:700;color:var(--text)}
+.credit{color:var(--text-muted);font-size:.88rem;margin:0}
+
+.nav{display:flex;gap:4px;background:var(--surface-soft);border-radius:var(--radius-lg);padding:4px;margin-bottom:24px;border:1px solid var(--border)}
+.nav-btn{flex:1;appearance:none;background:transparent;border:none;color:var(--text-muted);font-family:var(--sans);font-size:.92rem;font-weight:600;padding:10px 16px;border-radius:var(--radius-md);cursor:pointer;transition:all .15s}
+.nav-btn:hover{color:var(--text);background:var(--surface-hover)}
+.nav-btn.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow)}
+
+.cat-picker{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
+.cat-picker-header{justify-content:space-between;align-items:center;display:flex}
+.cat-picker-title{font-size:.72rem;font-weight:700;color:var(--accent);letter-spacing:.16em;text-transform:uppercase}
+.cat-chips{flex-wrap:wrap;gap:8px;display:flex}
+.chip{appearance:none;color:var(--text-muted);font-family:var(--sans);background:var(--surface);border:1px solid var(--border);border-radius:999px;cursor:pointer;align-items:center;gap:6px;padding:7px 14px;font-size:.85rem;font-weight:500;transition:all .15s;display:inline-flex}
+.chip:hover:not(:disabled){background:var(--surface-soft);color:var(--text);border-color:var(--border-strong)}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chip:disabled{opacity:.45;cursor:not-allowed}
+
+.stage{text-align:center;padding:40px 20px;margin-bottom:16px;background:var(--surface-soft);border-radius:var(--radius-lg);border:1px solid var(--border)}
+.status-label{letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:0 0 16px;font-size:.72rem;font-weight:700}
+.topic-title{font-family:var(--serif);letter-spacing:-.02em;color:var(--text);margin:0 0 14px;font-size:clamp(2rem,6vw,3rem);font-weight:700;line-height:1.2;word-break:break-word}
+.topic-hint{color:var(--text-muted);font-size:clamp(.95rem,2.4vw,1.08rem);line-height:1.55;margin:0 auto;max-width:520px}
+.topic-display{font-family:var(--serif);color:var(--text-dim);margin:0;font-size:1.4rem;font-weight:500}
+.topic-display.spinning{animation:.12s infinite alternate pulseBlur}
+@keyframes pulseBlur{0%{opacity:.72;filter:blur(.5px);transform:scale(.985)}to{opacity:1;filter:blur(0);transform:scale(1)}}
+
+/* ────── 手机端适配 ────── */
+@media (max-width: 720px) {
+  body { font-size: 16px; }
+  .app { padding: 14px 16px max(20px, env(safe-area-inset-bottom)) 16px; }
+  .header { flex-direction: column; align-items: stretch; gap: 10px; padding-top: max(8px, env(safe-area-inset-top)); }
+  .header .brand-row { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+  .header .credit { font-size: .75rem; }
+  .header h1.brand { font-size: 1.45rem; }
+  .tab-row { gap: 6px; }
+  .tab { padding: 10px 12px; font-size: .9rem; flex: 1; text-align: center; }
+  .card { padding: 18px 16px; border-radius: 14px; }
+  .topic-title { font-size: 1.7rem !important; }
+  .topic-hint { font-size: .9rem !important; }
+  .btn { padding: 14px 18px; font-size: 1rem; min-height: 48px; }  /* iOS 手指点击区 */
+  .timer { font-size: 2.4rem !important; }
+  .lib-grid { gap: 6px; }
+  .lib-pill { padding: 12px 8px; font-size: .8rem; }
+  .lib-pill .lib-meta { font-size: .65rem; }
+  .score-pill { padding: 10px 14px; font-size: .88rem; }
+  .modal { padding: 20px 18px; border-radius: 18px; width: 96vw; max-height: 92vh; }
+  .modal h2 { font-size: 1.1rem; }
+  .field textarea, .field input { font-size: 16px !important; } /* iOS 防止点击输入框放大 */
+  .stats { grid-template-columns: 1fr 1fr 1fr !important; gap: 8px !important; }
+  .stat-num { font-size: 1.4rem !important; }
+  .history-card { padding: 12px 14px; }
+  .history-meta { flex-wrap: wrap; gap: 6px; }
+  .footer { font-size: .7rem; }
+  .settings-panel { padding: 18px; }
+}
+/* 防止 iOS 长按选中 */
+* { -webkit-tap-highlight-color: rgba(217, 119, 87, 0.18); -webkit-touch-callout: none; }
+input, textarea { -webkit-user-select: text; user-select: text; }
+button { -webkit-user-select: none; user-select: none; }
+/* 超小屏优化 (320px 以下) */
+@media (max-width: 380px) {
+  .topic-title { font-size: 1.4rem !important; }
+  .stats { grid-template-columns: 1fr !important; }
+  .score-pill { flex: 1 0 40%; }
+}
+
+.timer{display:flex;flex-direction:column;align-items:center;gap:8px;margin:12px 0 24px}
+.timer-text{font-family:var(--serif);font-variant-numeric:tabular-nums;color:var(--accent);font-size:2.8rem;font-weight:600;letter-spacing:-.02em}
+.timer-label{font-size:.72rem;font-weight:700;color:var(--text-muted);letter-spacing:.16em;text-transform:uppercase}
+
+.actions{flex-wrap:wrap;justify-content:center;gap:10px;display:flex}
+.btn{appearance:none;font-family:var(--sans);border-radius:var(--radius-md);cursor:pointer;border:none;justify-content:center;align-items:center;gap:8px;padding:11px 22px;font-size:.92rem;font-weight:600;transition:all .15s;display:inline-flex}
+.btn:disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--accent-hover)}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover:not(:disabled){background:var(--surface-soft);border-color:var(--border-strong)}
+.btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border)}
+.btn-ghost:hover:not(:disabled){background:var(--surface-soft);color:var(--text)}
+.btn-success{background:var(--success);color:#fff}
+.btn-success:hover:not(:disabled){background:#347a4f}
+
+/* ────── 复盘评分胶囊 ────── */
+.score-grid{display:flex;flex-wrap:wrap;gap:6px}
+.score-pill{appearance:none;font-family:var(--sans);background:var(--surface);color:var(--text-muted);border:1px solid var(--border);border-radius:999px;padding:6px 14px;font-size:.82rem;font-weight:500;cursor:pointer;transition:all .15s}
+.score-pill:hover{border-color:var(--accent);color:var(--accent)}
+.score-pill.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.score-stat{font-size:1.05rem !important;line-height:1.3}
+
+.hint{color:var(--text-muted);text-align:center;font-size:.9rem;margin:0 0 20px}
+
+/* ────── 复盘弹窗 ────── */
+.modal-backdrop{backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:100;background:rgba(0,0,0,.32);opacity:0;pointer-events:none;transition:opacity .2s;display:grid;place-items:center;position:fixed;inset:0}
+.modal-backdrop.open{opacity:1;pointer-events:auto}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);width:min(92vw,560px);max-height:90vh;overflow:auto;box-shadow:var(--shadow-lg);padding:28px;transform:translateY(8px)scale(.99);transition:transform .2s}
+.modal-backdrop.open .modal{transform:translateY(0)scale(1)}
+.modal h2{font-family:var(--serif);margin:0 0 6px;font-size:1.4rem;font-weight:700}
+.modal-topic{color:var(--text-muted);margin:0 0 20px;font-size:.9rem}
+.modal-topic strong{color:var(--text);font-weight:600}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.78rem;font-weight:600;color:var(--text-muted);margin-bottom:6px;letter-spacing:.04em}
+.field textarea{width:100%;font-family:var(--sans);font-size:.95rem;line-height:1.55;color:var(--text);background:var(--surface-soft);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;resize:vertical;min-height:80px;transition:border-color .15s}
+.field textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+.modal-actions{justify-content:flex-end;gap:10px;margin-top:20px;display:flex}
+
+/* ────── 历史记录 ────── */
+.history-list{display:flex;flex-direction:column;gap:12px}
+.history-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px 18px;transition:border-color .15s;cursor:pointer}
+.history-item:hover{border-color:var(--border-strong)}
+.history-item-head{justify-content:space-between;align-items:flex-start;margin-bottom:8px;display:flex;gap:12px}
+.history-topic{font-family:var(--serif);font-size:1.05rem;font-weight:600;color:var(--text);margin:0}
+.history-date{color:var(--text-dim);font-size:.78rem;white-space:nowrap}
+.history-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.history-meta-tag{background:var(--surface-soft);color:var(--text-muted);font-size:.72rem;padding:2px 8px;border-radius:999px;font-weight:500}
+.history-snippet{color:var(--text-muted);font-size:.88rem;line-height:1.5;margin:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.history-actions{justify-content:flex-end;gap:8px;margin-top:10px;display:flex}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-dim)}
+.empty-state-icon{font-size:2rem;margin-bottom:12px;opacity:.5}
+.empty-state-text{font-size:.95rem;margin:0}
+
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--surface-soft);border-radius:var(--radius-md);padding:14px;text-align:center}
+.stat-num{font-family:var(--serif);font-size:1.6rem;font-weight:700;color:var(--accent);margin:0;line-height:1}
+.stat-label{font-size:.78rem;color:var(--text-muted);margin:6px 0 0;letter-spacing:.04em}
+
+@media (max-width:560px){.brand{font-size:1.8rem}.panel{padding:18px}.stage{padding:28px 16px}.stats-row{grid-template-columns:1fr}}
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      import React, { useState, useEffect, useRef, useMemo } from 'https://esm.sh/react@18.3.1';
+      import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
+
+      // ────────────────────────── 词库（分组）─────────────────────────
+      const LIBRARIES = [
+        {
+          id: 'ai', name: '人工智能', icon: '✦',
+          topics: [
+            '提示工程 | 怎么和 AI 说话的技巧。',
+            'RAG 检索增强 | 先查资料再回答，减少胡说。',
+            'AI Agent | 能自己拆任务、用工具的 AI。',
+            '多模态模型 | 同时处理文字图片语音视频的 AI。',
+            '模型微调 | 用特定数据把通用模型练成专家。',
+            '向量数据库 | 按语义而非关键词检索的数据库。',
+            '幻觉问题 | AI 一本正经地胡说八道。',
+            '模型蒸馏 | 把大模型的能力压到小模型。',
+            '思维链推理 | 让 AI 一步步思考再给答案。',
+            '函数调用 | AI 主动调用外部工具完成任务。',
+            'AI 代码助手 | Copilot 这类帮人写代码的 AI。',
+            '具身智能 | 拥有身体、会动手的 AI。',
+            '强化学习 | 通过试错和奖惩学会决策。',
+            '对齐问题 | 让 AI 目标和人类一致。',
+            '人脸识别 | 用脸做身份验证的技术。',
+            '推荐算法 | 抖音淘宝猜你喜欢背后的逻辑。',
+            '自动驾驶 | 让汽车自己开的技术。',
+            '智能家居 | 全屋联网一句话控制家电。',
+            '机器人 | 能自主行动的智能机器。',
+            '无人机 | 无人驾驶的飞行器。',
+            '虚拟现实 | VR 头显里的沉浸世界。',
+            'AI 换脸 | 把视频里人的脸换成别人。',
+            'AI 诈骗 | 用 AI 模仿声音和脸骗钱。',
+            '语音合成 | 把文字变成人声的 AI。',
+            '神经网络 | AI 模拟大脑神经元连接。',
+            'token | 大模型按 token 收费的最小单位。',
+            'vibe coding | 用自然语言让 AI 写代码。',
+            '表示学习 | AI 自动找到数据的特征。',
+            '元学习 | 让 AI 学会怎么学习。',
+            '奖励黑客 | AI 钻空子拿奖励不走正路。'
+          ]
+        },
+        {
+          id: 'cs', name: '计算机技术', icon: '⌘',
+          topics: [
+            '云计算 | 把服务器放云上，按需租用。',
+            '区块链 | 链式结构、不可篡改的分布式账本。',
+            '零信任架构 | 默认不信任任何人，每次都验证。',
+            '虚拟化技术 | 一台物理机跑多个虚拟服务器。',
+            '消息队列 | 让系统之间异步通信的中间件。',
+            'CDN 内容分发 | 把内容缓存到离用户近的节点。',
+            'Kubernetes | 自动管理容器的编排平台。',
+            'CQRS | 读写分离架构，查询和命令分两套。',
+            'PostgreSQL | 功能强大的开源关系数据库。',
+            'Redis | 内存数据库，常用于缓存。',
+            'Kafka | 高吞吐量的消息流处理平台。',
+            'gRPC | 高性能的远程调用框架。',
+            '服务网格 | 微服务之间通信的基础设施层。',
+            '可观测性 | 用日志、指标、链路监控系统。',
+            '边缘计算 | 把计算推到离用户近的地方。',
+            '缓存策略 | 决定什么数据缓存在哪里。',
+            'CI/CD | 持续集成持续部署，自动化上线。',
+            '负载均衡 | 把请求分给多台服务器。',
+            '云存储 | 把数据存在云上而不是本地。',
+            '操作系统 | 管理电脑硬件和软件的底座。',
+            'WiFi 原理 | 无线网络传输数据的方式。',
+            '编程语言 | 人和计算机沟通的语言。',
+            '防火墙 | 网络安全的第一道屏障。',
+            'IDE | 写代码的集成开发环境。',
+            'Linux | 开源的操作系统。',
+            'CLI | 用命令行操作电脑。',
+            'Docker | 把应用打包成标准容器。',
+            '微服务 | 把大系统拆成独立小服务。',
+            '后端架构 | 服务端系统的整体设计。'
+          ]
+        },
+        {
+          id: 'data', name: '数据安全与治理', icon: '🔒',
+          topics: [
+            '脱敏处理 | 把敏感信息变形后再用。',
+            '匿名化 | 让数据无法再关联到个人。',
+            '假名化 | 用假名替代真名但可逆。',
+            '数据分类 | 按类型给数据贴标签。',
+            '数据分级 | 按敏感程度给数据定级别。',
+            '敏感数据 | 一旦泄露会出事的字段。',
+            '个人信息 | 能识别到自然人的数据。',
+            'PII | 个人身份信息的英文缩写。',
+            '数据出境 | 数据离开国境要审批。',
+            'RBAC | 按角色分配权限。',
+            'ABAC | 按属性动态决定权限。',
+            '最小权限 | 只给必需的权限。',
+            '零信任 | 默认不信任，持续验证。',
+            'KMS | 密钥管理系统。',
+            'HSM | 硬件级的密钥保护设备。',
+            '双因素认证 | 密码+手机验证码两道验证。',
+            '单点登录 | 一处登录到处通行。',
+            '数据治理 | 管好数据资产的全套方法。',
+            '数据血缘 | 跟踪数据从哪来到哪去。',
+            '元数据 | 描述数据的数据。',
+            '主数据 | 全公司共享的核心数据。',
+            '数据目录 | 找数据的搜索目录。',
+            '数据字典 | 字段名和含义的说明书。',
+            '数据仓库 | 面向分析的集成数据存储。',
+            '数据湖 | 原始格式的大数据存储。',
+            '湖仓一体 | 湖和仓合二为一。',
+            'ETL | 抽取转换加载，加工数据。',
+            'ELT | 先加载再转换，适合云架构。',
+            'CDC | 实时捕获数据变更。',
+            '数据同步 | 让多份数据保持一致。',
+            '数据迁移 | 把数据搬到新系统。',
+            '数据集成 | 把多源数据合到一起。',
+            'ODS | 原始数据贴源层。',
+            '数据归档 | 把冷数据搬到便宜存储。',
+            '数据保留 | 数据保存多久的策略。',
+            '数据删除 | 真的从存储里抹掉。',
+            '数据备份 | 留一份副本防丢。',
+            '容灾备份 | 异地备份应对灾难。',
+            '异地容灾 | 数据放到另一个城市。',
+            '双活 | 两个机房同时对外服务。',
+            'RPO | 能容忍丢失多少数据。',
+            'RTO | 故障后多久恢复。',
+            'SLA | 服务等级承诺。',
+            '服务可用性 | 系统正常时间的百分比。',
+            '故障切换 | 主挂了备机顶上。',
+            '数据恢复 | 从备份里把数据找回来。',
+            '灾备演练 | 模拟灾难验证备份有效。',
+            '个人信息保护法 | 中国保护个人数据的基本法。',
+            '数据安全法 | 中国规范数据安全的基础法律。',
+            '网络安全法 | 中国网络空间的基础法律。',
+            'GDPR | 欧盟最严的个人数据保护法。',
+            '等保 2.0 | 中国信息安全等级保护标准。',
+            '等保三级 | 等保里较高级别的安全要求。',
+            '密评 | 商用密码应用安全性评估。',
+            '数据出境评估 | 数据出境前要做的合规评估。',
+            '合规审计 | 查数据使用是否合法。',
+            '知情同意 | 用数据前要让人知道并同意。',
+            '数据主体权利 | 个人对自己的数据的权利。',
+            '被遗忘权 | 个人要求删除自己数据的权利。',
+            '数据泄露 | 数据被未授权的人看到。',
+            'SQL 注入 | 黑客用 SQL 攻击数据库。',
+            'XSS 攻击 | 在网页注入恶意脚本。',
+            '拖库 | 把数据库整个拖走。',
+            '撞库 | 用泄露的密码批量试其他网站。',
+            'APT 攻击 | 高级持续性威胁，长期潜伏。',
+            'DLP 数据防泄漏 | 防止敏感数据外发的系统。',
+            '数据库审计 | 记录谁对数据库做了什么。',
+            '异常检测 | 自动发现可疑行为。',
+            '数据水印 | 在数据里埋可追溯的标记。',
+            '数据共享 | 让多个部门共用同一份数据。',
+            '数据开放 | 政府向社会公开数据。',
+            '数据要素 | 数据作为生产要素参与分配。',
+            '数据资产化 | 把数据当成公司资产来管。',
+            '数据流通 | 数据在主体之间流转使用。',
+            '数据交易 | 把数据当商品来买卖。',
+            '联邦学习 | 数据不出门，模型联合训练。',
+            '隐私计算 | 在保护隐私的前提下计算数据。',
+            '多方安全计算 | 多方协作算但互相不泄密。',
+            '数据沙箱 | 隔离环境里试数据。',
+            '差分隐私 | 加噪音保护个人又能算统计。',
+            '同态加密 | 加密态下直接计算不解密。',
+            '区块链存证 | 用区块链证明数据没被改过。'
+          ]
+        },
+        {
+          id: 'product', name: '产品与创业', icon: '◈',
+          topics: [
+            '最小可行产品 | MVP，能验证假设的最简版本。',
+            '产品市场匹配 | PMF，产品刚好满足市场需求。',
+            '用户画像 | 给典型用户画个像。',
+            '增长黑客 | 用技术手段驱动用户增长。',
+            '订阅定价 | 按月/年收费的商业模式。',
+            '用户留存 | 让老用户继续使用和付费。',
+            'A/B 测试 | 两版本对比看哪个效果更好。',
+            '产品路线图 | 产品未来发展的规划图。',
+            '技术债务 | 为了快上线欠下的技术债。',
+            '开源商业化 | 用开源项目赚钱。',
+            '开发者体验 | 让开发者用得爽的设计。',
+            '社区运营 | 经营用户社区。',
+            '冷启动 | 新产品从零拉来第一批用户。',
+            '护城河 | 让对手难以超越的竞争优势。',
+            '垂直 AI 应用 | 聚焦某行业的 AI 产品。',
+            '出海策略 | 把产品卖到海外市场。',
+            '用户反馈 | 收集和处理用户意见。',
+            'App 推广 | 让更多人来下载 App。',
+            '社交裂变 | 通过社交关系拉新用户。',
+            '竞品分析 | 研究对手产品的优劣。',
+            '邀请机制 | 老带新的拉新方式。',
+            '补贴大战 | 用钱砸用户的竞争。',
+            '公域与私域 | 公共流量和自己能触达的流量。'
+          ]
+        },
+        {
+          id: 'laws', name: '效应与定律', icon: '∝',
+          topics: [
+            '墨菲定律 | 会出错的事总会出错。',
+            '彼得原理 | 人会升到他不胜任的位置。',
+            '帕金森定律 | 工作会膨胀到占满所有时间。',
+            '二八定律 | 20% 原因决定 80% 结果。',
+            '木桶定律 | 短板决定整体容量。',
+            '马太效应 | 强者愈强，弱者愈弱。',
+            '破窗效应 | 破窗不修，更多窗被砸。',
+            '旁观者效应 | 人越多越没人帮忙。',
+            '蝴蝶效应 | 一只蝴蝶扇动翅膀引发风暴。',
+            '飞轮效应 | 起步慢但后期加速度惊人。',
+            '鲶鱼效应 | 放条鲶鱼激活整池沙丁鱼。',
+            '棘轮效应 | 消费易升难降。',
+            '青蛙效应 | 慢慢加温的温水煮青蛙。',
+            '毛毛虫效应 | 盲目跟随前人路线。',
+            '瓦伦达效应 | 越想赢越发挥失常。',
+            '酝酿效应 | 暂时放一放反而有灵感。',
+            '三明治效应 | 批评夹在表扬中间。',
+            '留白效应 | 适度留白更显格调。',
+            '首因效应 | 第一印象影响最深。',
+            '近因效应 | 最近的事记得最清。',
+            '晕轮效应 | 喜欢一个人就什么都好。',
+            '锚定效应 | 第一个数字决定后续判断。',
+            '沉没成本 | 为已花的钱继续投入。',
+            '禀赋效应 | 自己的东西估值更高。',
+            '损失厌恶 | 丢的痛大于得的乐。',
+            '确认偏误 | 只看支持自己观点的证据。',
+            '达克效应 | 越无知的人越自信。',
+            '幸存者偏差 | 只看到成功的，看不到失败的。',
+            '鸵鸟心态 | 假装问题不存在。',
+            '聚光灯效应 | 高估别人对自己的关注。',
+            '富兰克林效应 | 帮过你的人更愿再帮你。',
+            '登门槛效应 | 先答应小要求再答应大要求。',
+            '互惠原则 | 别人给了你就想还。',
+            '稀缺效应 | 越稀缺越想要。',
+            '权威效应 | 听专家的。',
+            '从众效应 | 跟着大多数人走。',
+            '狄德罗效应 | 买一件就想配齐一套。',
+            '安泰效应 | 离开根基就失去力量。',
+            '一万小时定律 | 持续练习一万小时成专家。',
+            '边际效用递减 | 每多一份满足感递减。',
+            '机会成本 | 选 A 就放弃 B 的最大价值。',
+            '复利效应 | 利滚利长期威力巨大。',
+            '反木桶效应 | 长板决定真正价值。',
+            '蘑菇定律 | 新人前几个月要默默生长。',
+            '帕累托原则 | 二八定律的学术说法。',
+            '奥卡姆剃刀 | 如无必要勿增实体。',
+            '邓宁-克鲁格效应 | 无知者自信，智者谦逊。',
+            '柯立芝效应 | 新配偶会重新激起兴趣。',
+            '巴纳姆效应 | 笼统描述觉得精准描述了自己。',
+            '斯德哥尔摩综合征 | 被劫持者反同情劫持者。',
+            '路西法效应 | 好人在特定环境会作恶。',
+            '旁观者谬误 | 高估他人对事件的关注度。',
+            '皮格马利翁效应 | 期望什么就得到什么。',
+            '霍桑效应 | 被关注时表现更好。',
+            '安慰剂效应 | 无效治疗因相信而有效。',
+            '反安慰剂效应 | 因预期副作用真出现副作用。',
+            '鸟笼效应 | 偶然获得物品会留下配套。',
+            '瓦伦达心态 | 过度关注结果忽视过程。'
+          ]
+        },
+        {
+          id: 'mgmt', name: '管理与经济', icon: '¥',
+          topics: [
+            '目标管理 | 把事拆成可衡量的小目标。',
+            'SMART 原则 | 目标要具体可衡量可达成相关有时限。',
+            'PDCA 循环 | 计划执行检查改进，反复循环。',
+            '四象限法则 | 按重要紧急两维度分四类。',
+            'GTD 方法 | 把所有事记下来清空大脑。',
+            'SWOT 分析 | 优势劣势机会威胁四个维度。',
+            '波特五力 | 行业竞争的五个维度。',
+            '波士顿矩阵 | 把业务分明星金牛问题瘦狗四类。',
+            '价值链分析 | 把企业拆成环节找最优。',
+            '平衡计分卡 | 财务客户流程学习四维度评估。',
+            'OKR | 目标加关键结果的管理方法。',
+            'KPI 管理 | 用关键绩效指标管人管事。',
+            'MBO 目标 | 上下级共同定目标。',
+            '德尔菲法 | 多轮匿名专家咨询预测。',
+            '六顶思考帽 | 六个角度想同一个问题。',
+            '5W1H 分析 | 何事何因何人何时何地怎么做。',
+            '鱼骨图 | 把问题层层拆解找根因。',
+            '帕累托分析 | 找那 20% 关键原因。',
+            '决策树 | 用 if-then 树状图做选择。',
+            '情景规划 | 设想几种未来场景定预案。',
+            '复盘方法 | 做完后总结经验教训。',
+            '金字塔原理 | 结论先行，再论据再细节。',
+            'STAR 法则 | 面试讲故事的情境任务行动结果。',
+            '供需关系 | 价格由供给和需求决定。',
+            '边际成本 | 每多生产一个的额外成本。',
+            '规模经济 | 越大越便宜。',
+            '范围经济 | 多业务共用资源省成本。',
+            '网络效应 | 用的人越多越值钱。',
+            '双边市场 | 连接两边用户的平台。',
+            '长尾理论 | 冷门商品加起来也能成大市场。',
+            '蓝海战略 | 找没人竞争的空白市场。',
+            '红海战略 | 在已有市场血拼。',
+            '梅特卡夫法则 | 网络价值等于用户数平方。',
+            '赢者通吃 | 第一名拿走所有，第二名喝汤。',
+            '零和博弈 | 你赚的就是我亏的。',
+            '正和博弈 | 双方都能赢。',
+            '外部性 | 行为影响无关第三方。',
+            '公共物品 | 人人都能用且不消耗。',
+            '信息不对称 | 一方知道另一方不知道。',
+            '逆向选择 | 劣币驱逐良币。',
+            '道德风险 | 有保险后行为变大胆。',
+            '免费模式 | 基础免费赚钱靠其他。',
+            '订阅经济 | 按月按年付费持续用。',
+            '平台经济 | 搭台让别人唱戏。',
+            '共享经济 | 把闲置资源用起来。',
+            '注意力经济 | 赚用户的注意力。',
+            '体验经济 | 卖的不只是产品是体验。',
+            '粉丝经济 | 围绕粉丝做生意。',
+            '网红经济 | 靠网红带货做生意。',
+            '私域流量 | 直接触达用户不靠平台。',
+            '流量变现 | 把流量变成钱。',
+            '转化率 | 看的人里几个下单。',
+            '复购率 | 老用户再买的比例。',
+            '获客成本 | 拉一个新用户花多少钱。',
+            '用户生命周期 | 用户从注册到流失的总时长。',
+            'ARPU | 每用户平均收入。',
+            'LTV | 用户终身价值。',
+            'CAC | 获客成本。',
+            'ROI | 投资回报率。',
+            '差异化 | 和别人不一样。',
+            '成本领先 | 做得比对手便宜。',
+            '聚焦战略 | 集中打一个细分市场。',
+            '生态系统 | 一群人互相依赖。',
+            '联盟战略 | 抱团取暖。',
+            '破坏式创新 | 用低端产品颠覆高端。'
+          ]
+        },
+        {
+          id: 'pmethod', name: '产品方法论', icon: '◔',
+          topics: [
+            '用户旅程 | 用户从接触产品到完成目标的路径。',
+            '用户故事 | 从用户视角讲需求。',
+            '场景分析 | 在什么情况下用什么功能。',
+            '痛点分析 | 找用户不爽的地方。',
+            '需求挖掘 | 表面需求背后找真实需求。',
+            '需求分层 | 分基本期望兴奋三层需求。',
+            'KANO 模型 | 把需求按用户满意度分四类。',
+            '马斯洛需求 | 五层从生理到自我实现。',
+            'JTBD 理论 | 用户雇产品完成任务。',
+            'HEART 框架 | 愉悦度等五维度衡量体验。',
+            'GSM 模型 | 目标信号指标三层拆解。',
+            'AARRR 模型 | 获取激活留存收入推荐漏斗。',
+            'RICE 优先级 | 触达影响信心努力四维度评分。',
+            'ICE 评分 | 影响信心简易三维度评分。',
+            'MoSCoW 法则 | 必需应该有可以不要四类。',
+            'MVP 验证 | 用最小版本验证产品假设。',
+            'PMF 契合 | 产品和市场对上眼。',
+            '北极星指标 | 全公司盯一个核心数。',
+            'AHA 时刻 | 用户第一次感觉这玩意儿好。',
+            '魔法数字 | 触发留存的关键次数。',
+            '留存曲线 | 看用户多久还来。',
+            '用户激活 | 新用户变活跃用户。',
+            '产品迭代 | 小步快跑不断更新。',
+            '灰度发布 | 先给一部分人用。',
+            '多变量测试 | 同时测多个改动。',
+            '功能开关 | 上线后随时能关。',
+            '小流量实验 | 先给 1% 用户试试。',
+            '用户分层 | 把用户分群运营。',
+            '标签体系 | 给用户贴标签。',
+            '用户体验 | 用户用得爽不爽。',
+            '可用性 | 学起来难不难。',
+            '易用性 | 用起来方不方便。',
+            '可访问性 | 残障人士也能用。',
+            '一致性 | 设计风格统一。',
+            '反馈机制 | 操作后给反应。',
+            '信息架构 | 怎么组织内容。',
+            '交互设计 | 用户和产品的对话方式。',
+            '视觉设计 | 好不好看。',
+            '情感化设计 | 让用户有感情共鸣。',
+            '无障碍设计 | 让所有人能用。',
+            '响应式设计 | 适配各种屏幕。',
+            '数据驱动 | 用数据做决策不靠拍脑袋。',
+            '指标体系 | 一堆指标形成监控网。',
+            '漏斗分析 | 看每一步流失多少人。',
+            '归因分析 | 这次成交算谁的功劳。',
+            '行为分析 | 用户做了什么。',
+            '转化漏斗 | 从看到买到每步转化率。',
+            '留存分析 | 多少用户还在。',
+            '复购分析 | 老用户再买次数。',
+            '价值分层 | 按价值给用户分层。',
+            'RFM 模型 | 最近买买多少次花多少。',
+            '同期群分析 | 同时间来的用户对比。',
+            '用户路径 | 用户在产品里的行走轨迹。',
+            '第一性原理 | 回到最基础事实思考。',
+            '逆向思维 | 反着来想问题。',
+            '类比思维 | 用熟悉的事理解陌生。',
+            '发散思维 | 想到多少就写多少。',
+            '收敛思维 | 从一堆里挑出最好的。',
+            '系统思维 | 看整体不看局部。',
+            '设计思维 | 同理定义构思原型测试。',
+            '敏捷开发 | 小步快跑的软件开发。',
+            'Scrum | 敏捷开发的具体做法。',
+            '看板方法 | 把任务可视化推进。'
+          ]
+        },
+        {
+          id: 'stock', name: '股票投资', icon: '¥',
+          topics: [
+            '股票 | 公司发行的所有权凭证。',
+            'A股 | 人民币普通股票，境内交易。',
+            'IPO | 公司首次公开募股上市。',
+            '市值 | 股价乘以总股本。',
+            '股东 | 持有公司股份的人。',
+            '上市公司 | 股票在交易所公开交易的公司。',
+            '开盘价 | 交易日第一笔成交价。',
+            '收盘价 | 交易日最后一笔成交价。',
+            '成交量 | 一定时间内成交的股票数。',
+            '换手率 | 当日成交量占流通股本的比例。',
+            '涨跌幅 | 当日股价涨跌的百分比。',
+            '涨停 | 涨到当日上限无法再涨。',
+            '跌停 | 跌到当日下限无法再跌。',
+            'K线 | 记录股价走势的蜡烛图。',
+            '均线 | 一段时间的平均价格连线。',
+            'MACD | 看趋势和买卖点的指标。',
+            'KDJ | 短期超买超卖指标。',
+            'RSI | 衡量涨跌力度的相对强弱指标。',
+            '金叉 | 短期均线上穿长期均线看涨。',
+            '死叉 | 短期均线下穿长期均线看跌。',
+            '价值投资 | 找被低估的好公司长期持有。',
+            '短线交易 | 几天内快进快出。',
+            '中长线投资 | 持有数月到几年的投资。',
+            '右侧交易 | 确认涨了再跟进的顺势操作。',
+            '追涨杀跌 | 涨了跟着买跌了跟着卖。',
+            '抄底 | 觉得是低点买入等待反弹。',
+            '仓位 | 投资的钱占总资金的比例。',
+            'T+1 | A股当天买入次日才能卖。',
+            '止损 | 跌到一定价位认赔卖出。',
+            '止盈 | 涨到一定价位落袋为安。',
+            '套牢 | 买入后股价下跌被套住。',
+            '补仓 | 下跌后继续买入降低成本。',
+            '割肉 | 亏损卖出承认损失。',
+            '分散投资 | 不把鸡蛋放一个篮子里。',
+            '财报 | 公司定期发布的财务报告。',
+            '净利润 | 公司最终赚到的钱。',
+            '营收 | 公司卖东西的总收入。',
+            '毛利率 | 营收减去直接成本的比率。',
+            '市盈率 | 股价与每股收益的比值。',
+            '市净率 | 股价与每股净资产的比值。',
+            '现金流 | 公司实际进出多少钱。',
+            '基金 | 集合多人的钱由专人投资。',
+            'ETF | 可以在交易所买卖的基金。',
+            '指数基金 | 跟踪某个指数的基金。',
+            '定投 | 定期定额买入摊平成本。',
+            '融资融券 | 借钱买券或借券卖出的杠杆。',
+            '牛市 | 持续上涨的市场。',
+            '熊市 | 持续下跌的市场。',
+            '震荡市 | 涨涨跌跌没有明显趋势。',
+            '贪婪情绪 | 市场上涨时的集体狂热。',
+            '恐慌情绪 | 市场下跌时的集体恐惧。',
+            '接盘侠 | 高位买入被套的人。'
+          ]
+        },
+        {
+          id: 'hardware', name: '计算机硬件', icon: '🔧',
+          topics: [
+            'CPU | 中央处理器，电脑的大脑。',
+            'CPU 核心 | 处理器内部的独立计算单元。',
+            'CPU 主频 | CPU 每秒执行指令的次数。',
+            'CPU 缓存 | CPU 内部的高速暂存区。',
+            'CPU 线程 | 一个核心可同时处理的指令流。',
+            'GPU | 图形处理器，擅长并行计算。',
+            '显存 | GPU 专用的高速内存。',
+            'CUDA 核心 | NVIDIA GPU 的并行计算单元。',
+            'NPU | 神经网络处理器，专为 AI 推理设计。',
+            'TPU | Google 自研的 AI 专用芯片。',
+            '内存 | CPU 临时存储数据的地方。',
+            'DDR 内存 | 主流的内存类型，DDR5 是最新代。',
+            'ROM | 只读存储器，断电不丢数据。',
+            '硬盘 | 长期存储数据的设备。',
+            '机械硬盘 | 用磁碟旋转的传统硬盘。',
+            '固态硬盘 | 用闪存芯片的高速硬盘。',
+            'NVMe 协议 | 固态硬盘的高速接口协议。',
+            'SSD | 固态硬盘的英文缩写。',
+            '主板 | 电脑的核心电路板，连通所有硬件。',
+            'BIOS | 主板固件，开机启动的最底层程序。',
+            'UEFI | BIOS 的现代替代品。',
+            '芯片 | 集成电路板，硬件的核心部件。',
+            '芯片制程 | 芯片晶体管的尺寸大小。',
+            'USB | 通用串行总线，最常见的外设接口。',
+            'HDMI 接口 | 视频和音频的传输接口。',
+            'Type-C 接口 | 可正反插的新型 USB 接口。',
+            '雷电接口 | 苹果主推的高速数据传输接口。',
+            '服务器 | 长期运行、提供服务的电脑。',
+            '云主机 | 云上的虚拟服务器。',
+            '云服务器 | 云平台上租用的高性能服务器。',
+            '物理机 | 看得见摸得着的真实服务器。',
+            '虚拟机 | 用软件模拟出来的虚拟电脑。',
+            '容器 | 更轻量的虚拟化技术。',
+            'Docker | 最流行的容器引擎。',
+            'Kubernetes | 容器编排系统。',
+            '机架 | 服务器的物理安装框架。',
+            '机架服务器 | 标准化安装在机架上的服务器。',
+            '刀片服务器 | 高密度、可热插拔的紧凑型服务器。',
+            '网卡 | 处理网络数据的硬件。',
+            '路由器 | 负责网络数据转发的设备。',
+            '交换机 | 连接多台设备的局域网设备。',
+            '防火墙 | 网络安全的第一道屏障。'
+          ]
+        }
+      ];
+
+      const parseTopic = (s) => {
+        const idx = s.indexOf('|');
+        if(idx === -1) return { id: s, title: s.trim(), hint: '' };
+        return { id: s.slice(0, idx).trim(), title: s.slice(0, idx).trim(), hint: s.slice(idx+1).trim() };
+      };
+
+      const allTopics = LIBRARIES.flatMap(l => l.topics);
+      const byLib = id => LIBRARIES.find(l => l.id === id)?.topics ?? [];
+
+      const SPEECH_SECONDS = 60;
+      const DEFAULT_SETTINGS = { prepMinutes: 10, muted: true };
+
+      function fmt(s){ const m=Math.floor(s/60); return `${m}:${String(s%60).padStart(2,'0')}`; }
+      const SCORE_LABELS = { 7:'夯爆了', 6:'夯', 5:'顶级', 4:'人上人', 3:'NPC', 2:'拉完了', 1:'拉中拉之拉一裤兜' };
+      function scoreLabel(n){ return SCORE_LABELS[n] || (n ? `${n}★` : '未评分'); }
+
+      function loadSettings(){
+        try{
+          const raw = localStorage.getItem('quickask-clone-settings');
+          if(!raw) return DEFAULT_SETTINGS;
+          return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+        }catch{ return DEFAULT_SETTINGS; }
+      }
+      function saveSettings(s){
+        try{ localStorage.setItem('quickask-clone-settings', JSON.stringify(s)); }catch{}
+      }
+
+      // 历史记录：{ [topicId]: [{ id, date, takeaway, score, note }] }
+      function loadHistory(){
+        try{
+          const raw = localStorage.getItem('quickask-clone-history');
+          if(!raw) return {};
+          return JSON.parse(raw);
+        }catch{ return {}; }
+      }
+      function saveHistory(h){
+        try{ localStorage.setItem('quickask-clone-history', JSON.stringify(h)); }catch{}
+      }
+
+      let audioCtx = null;
+      function beep(freq=880, dur=0.12){
+        const s = loadSettings();
+        if(s.muted) return;
+        try{
+          audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.frequency.value = freq;
+          o.type = 'sine';
+          g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+          o.connect(g); g.connect(audioCtx.destination);
+          o.start(); o.stop(audioCtx.currentTime + dur);
+        }catch{}
+      }
+
+      function App(){
+        // 视图：practice / history
+        const [view, setView] = useState('practice');
+        const [pickedLibs, setPickedLibs] = useState(LIBRARIES.map(l => l.id));
+        const [topic, setTopic] = useState(null);
+        const [status, setStatus] = useState('ready'); // ready | drawing | topic
+        const [drawing, setDrawing] = useState(false);
+        const [phase, setPhase] = useState('idle');    // idle | prep | ready-speech | speech | done
+        const [seconds, setSeconds] = useState(0);
+        const [settingsOpen, setSettingsOpen] = useState(false);
+        const [settings, setSettings] = useState(loadSettings);
+        const [history, setHistory] = useState(loadHistory);
+        const [reviewing, setReviewing] = useState(null); // 正在写的复盘条目
+        const [editingReview, setEditingReview] = useState(null); // 编辑某条历史
+        const tickRef = useRef(null);
+
+        const pool = useMemo(() => {
+          if(!pickedLibs.length) return [];
+          const set = new Set();
+          pickedLibs.forEach(id => byLib(id).forEach(t => set.add(t)));
+          return [...set];
+        }, [pickedLibs]);
+
+        const prepSeconds = settings.prepMinutes * 60;
+
+        useEffect(() => () => clearInterval(tickRef.current), []);
+        useEffect(() => { saveSettings(settings); }, [settings]);
+        useEffect(() => { saveHistory(history); }, [history]);
+
+        const reset = () => {
+          clearInterval(tickRef.current);
+          setPhase('idle');
+          setSeconds(0);
+        };
+
+        const toggleLib = (id) => {
+          if(drawing) return;
+          setPickedLibs(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+          reset();
+          setStatus('ready');
+          setTopic(null);
+        };
+
+        const draw = () => {
+          if(drawing || !pool.length) return;
+          beep(660, 0.08);
+          setDrawing(true);
+          reset();
+          setStatus('drawing');
+          const start = performance.now();
+          const tick = (now) => {
+            const elapsed = now - start;
+            const arr = pool;
+            const t = parseTopic(arr[Math.floor(Math.random()*arr.length)]);
+            setTopic(t);
+            if(elapsed < 1200) requestAnimationFrame(tick);
+            else {
+              const t2 = parseTopic(arr[Math.floor(Math.random()*arr.length)]);
+              setTopic(t2);
+              setDrawing(false);
+              setStatus('topic');
+              beep(1320, 0.18);
+            }
+          };
+          requestAnimationFrame(tick);
+        };
+
+        const startPrep = () => {
+          if(status !== 'topic') return;
+          let s = prepSeconds;
+          setPhase('prep');
+          setSeconds(s);
+          clearInterval(tickRef.current);
+          tickRef.current = setInterval(() => {
+            setSeconds(prev => prev <= 1 ? (clearInterval(tickRef.current), setPhase('ready-speech'), beep(880, 0.12), 0) : prev - 1);
+          }, 1000);
+        };
+
+        const skipPrep = () => {
+          clearInterval(tickRef.current);
+          setPhase('ready-speech');
+          beep(880, 0.12);
+        };
+
+        const startSpeech = () => {
+          if(phase !== 'ready-speech') return;
+          setPhase('speech');
+          setSeconds(SPEECH_SECONDS);
+          beep(1320, 0.12);
+          tickRef.current = setInterval(() => {
+            setSeconds(prev => prev <= 1 ? (clearInterval(tickRef.current), setPhase('done'), beep(440, 0.4), 0) : prev - 1);
+          }, 1000);
+        };
+
+        // 演讲结束 → 弹出复盘
+        const finishAndReview = () => {
+          if(!topic) return;
+          clearInterval(tickRef.current);
+          setPhase('done');
+          beep(440, 0.4);
+          // 创建空复盘条目
+          setReviewing({
+            topicId: topic.id,
+            title: topic.title,
+            hint: topic.hint,
+            date: new Date().toISOString(),
+            score: 3,
+            takeaway: '',
+            note: ''
+          });
+        };
+
+        // 保存复盘
+        const saveReview = (review) => {
+          setHistory(prev => {
+            const list = prev[review.topicId] || [];
+            return { ...prev, [review.topicId]: [review, ...list] };
+          });
+          setReviewing(null);
+        };
+
+        const deleteReview = (topicId, reviewDate) => {
+          setHistory(prev => {
+            const list = prev[topicId] || [];
+            const filtered = list.filter(r => r.date !== reviewDate);
+            const next = { ...prev };
+            if(filtered.length === 0) delete next[topicId];
+            else next[topicId] = filtered;
+            return next;
+          });
+          if(editingReview && editingReview.date === reviewDate) setEditingReview(null);
+        };
+
+        const allReviews = useMemo(() => {
+          const arr = [];
+          Object.entries(history).forEach(([topicId, reviews]) => {
+            reviews.forEach(r => arr.push({ ...r, topicId }));
+          });
+          return arr.sort((a, b) => new Date(b.date) - new Date(a.date));
+        }, [history]);
+
+        const done = phase === 'done';
+        const showTimer = phase !== 'idle';
+        let label = '', timerSeconds = 0, timerTotal = 0;
+        if(phase === 'prep'){ label = '准备时间'; timerTotal = prepSeconds; timerSeconds = seconds; }
+        else if(phase === 'ready-speech'){ label = '准备就绪'; timerTotal = SPEECH_SECONDS; timerSeconds = SPEECH_SECONDS; }
+        else if(phase === 'speech'){ label = '演讲中'; timerTotal = SPEECH_SECONDS; timerSeconds = seconds; }
+        else if(phase === 'done'){ label = '已结束'; timerTotal = SPEECH_SECONDS; timerSeconds = 0; }
+
+        // ────────────── Practice View ──────────────
+        const PracticeView = React.createElement(React.Fragment, null,
+          React.createElement('p', { className: 'hint' }, '深度研究模式：抽题 → 10 分钟准备 → 60 秒演讲 → 复盘记录。'),
+          React.createElement('div', { className: 'cat-picker' },
+            React.createElement('div', { className: 'cat-picker-header' },
+              React.createElement('span', { className: 'cat-picker-title' }, '选择词库（多选）'),
+              React.createElement('button', {
+                className: 'chip',
+                onClick: () => setPickedLibs(pickedLibs.length === LIBRARIES.length ? [] : LIBRARIES.map(l => l.id)),
+                disabled: drawing
+              }, pickedLibs.length === LIBRARIES.length ? '清空' : '全选')
+            ),
+            React.createElement('div', { className: 'cat-chips' },
+              ...LIBRARIES.map(l => React.createElement('button', {
+                key: l.id,
+                className: 'chip' + (pickedLibs.includes(l.id) ? ' active' : ''),
+                onClick: () => toggleLib(l.id),
+                disabled: drawing,
+                'aria-pressed': pickedLibs.includes(l.id)
+              },
+                React.createElement('span', null, l.icon),
+                l.name
+              ))
+            )
+          ),
+
+          React.createElement('div', { className: 'stage' },
+            React.createElement('p', { className: 'status-label' },
+              status === 'ready' && '准备',
+              status === 'drawing' && '抽取中…',
+              status === 'topic' && '你的题目'
+            ),
+            topic
+              ? React.createElement(React.Fragment, null,
+                  React.createElement('h2', { className: 'topic-title' }, topic.title),
+                  React.createElement('p', { className: 'topic-hint' }, topic.hint),
+                  history[topic.id] && history[topic.id].length > 0
+                    ? React.createElement('p', { style: { marginTop: 12, fontSize: '.85rem', color: 'var(--success)' } },
+                        `✓ 已演讲 ${history[topic.id].length} 次`)
+                    : null
+                )
+              : React.createElement('p', { className: 'topic-display' }, '点击下方按钮抽取一个题目')
+          ),
+
+          showTimer && React.createElement('div', { className: 'timer' },
+            React.createElement('div', { className: 'timer-text' }, fmt(timerSeconds)),
+            React.createElement('div', { className: 'timer-label' }, label)
+          ),
+
+          React.createElement('div', { className: 'actions' },
+            // 主按钮：抽题 / 再抽
+            React.createElement('button', {
+              className: 'btn btn-primary',
+              onClick: draw, disabled: drawing || !pool.length
+            }, status === 'ready' ? '抽取题目' : '换一个'),
+            // 第二按钮：根据阶段切换
+            phase === 'idle' && status === 'topic'
+              ? React.createElement('button', { className: 'btn btn-secondary', onClick: startPrep },
+                  `开始 ${settings.prepMinutes} 分钟准备`)
+              : null,
+            phase === 'prep'
+              ? React.createElement('button', { className: 'btn btn-ghost', onClick: skipPrep }, '跳过准备')
+              : null,
+            phase === 'ready-speech'
+              ? React.createElement('button', { className: 'btn btn-primary', onClick: startSpeech }, '开始 60 秒演讲')
+              : null,
+            phase === 'speech'
+              ? React.createElement('button', { className: 'btn btn-success', onClick: finishAndReview }, '结束并复盘')
+              : null,
+            React.createElement('button', {
+              className: 'btn btn-ghost',
+              'aria-label': '设置',
+              onClick: () => setSettingsOpen(true), disabled: drawing
+            }, '⚙ 设置')
+          )
+        );
+
+        // ────────────── History View ──────────────
+        const completedCount = Object.keys(history).length;
+        const totalCount = allReviews.length;
+        const HistoryView = React.createElement(React.Fragment, null,
+          React.createElement('div', { className: 'stats-row' },
+            React.createElement('div', { className: 'stat' },
+              React.createElement('p', { className: 'stat-num' }, completedCount),
+              React.createElement('p', { className: 'stat-label' }, '已练习词条')
+            ),
+            React.createElement('div', { className: 'stat' },
+              React.createElement('p', { className: 'stat-num' }, totalCount),
+              React.createElement('p', { className: 'stat-label' }, '总复盘次数')
+            ),
+            React.createElement('div', { className: 'stat' },
+              React.createElement('p', { className: 'stat-num score-stat' },
+                totalCount > 0 ? scoreLabel(Math.round(allReviews.reduce((s, r) => s + (r.score || 0), 0) / totalCount)) : '—'),
+              React.createElement('p', { className: 'stat-label' }, '平均表现')
+            )
+          ),
+          allReviews.length === 0
+            ? React.createElement('div', { className: 'empty-state' },
+                React.createElement('div', { className: 'empty-state-icon' }, '📝'),
+                React.createElement('p', { className: 'empty-state-text' }, '还没有复盘记录。\n完成一次演讲后会出现在这里。')
+              )
+            : React.createElement('div', { className: 'history-list' },
+                allReviews.map(r => React.createElement('div', {
+                  key: r.topicId + r.date,
+                  className: 'history-item'
+                },
+                  React.createElement('div', { className: 'history-item-head' },
+                    React.createElement('h3', { className: 'history-topic' }, r.title),
+                    React.createElement('span', { className: 'history-date' }, new Date(r.date).toLocaleString('zh-CN'))
+                  ),
+                  React.createElement('div', { className: 'history-meta' },
+                    React.createElement('span', { className: 'history-meta-tag' }, scoreLabel(r.score)),
+                    r.hint ? React.createElement('span', { className: 'history-meta-tag' }, r.hint) : null
+                  ),
+                  r.takeaway
+                    ? React.createElement('p', { className: 'history-snippet' }, '💡 ' + r.takeaway)
+                    : null,
+                  r.note
+                    ? React.createElement('p', { className: 'history-snippet', style: { marginTop: 4 } }, '📝 ' + r.note)
+                    : null,
+                  React.createElement('div', { className: 'history-actions' },
+                    React.createElement('button', { className: 'btn btn-ghost', onClick: () => setEditingReview(r) }, '编辑'),
+                    React.createElement('button', {
+                      className: 'btn btn-ghost',
+                      onClick: () => { if(confirm('删除这条复盘？')) deleteReview(r.topicId, r.date); }
+                    }, '删除')
+                  )
+                ))
+              )
+        );
+
+        // ────────────── Review Modal ──────────────
+        const ReviewModal = reviewing || editingReview
+          ? React.createElement('div', {
+              className: 'modal-backdrop open',
+              onClick: e => { if(e.target === e.currentTarget) { setReviewing(null); setEditingReview(null); } }
+            },
+            React.createElement('div', { className: 'modal', role: 'dialog', 'aria-modal': 'true' },
+              React.createElement('h2', null, reviewing ? '复盘这次演讲' : '编辑复盘'),
+              React.createElement('p', { className: 'modal-topic' },
+                React.createElement('strong', null, reviewing.title),
+                reviewing.hint ? ' — ' + reviewing.hint : ''
+              ),
+              React.createElement('div', { className: 'field' },
+                React.createElement('label', null, '本次表现评分'),
+                React.createElement('div', { className: 'score-grid' },
+                  [
+                    { v: 7, label: '夯爆了' },
+                    { v: 6, label: '夯' },
+                    { v: 5, label: '顶级' },
+                    { v: 4, label: '人上人' },
+                    { v: 3, label: 'NPC' },
+                    { v: 2, label: '拉完了' },
+                    { v: 1, label: '拉中拉之拉一裤兜' }
+                  ].map(opt => {
+                    const cur = reviewing?.score ?? editingReview?.score ?? 0;
+                    const active = opt.v === cur;
+                    return React.createElement('button', {
+                      key: opt.v,
+                      className: 'score-pill ' + (active ? 'on' : ''),
+                      onClick: () => {
+                        if(reviewing) setReviewing({ ...reviewing, score: opt.v });
+                        else setEditingReview({ ...editingReview, score: opt.v });
+                      }
+                    }, opt.label);
+                  })
+                )
+              ),
+              React.createElement('div', { className: 'field' },
+                React.createElement('label', null, '💡 一个核心收获（讲完后你印象最深的一点）'),
+                React.createElement('textarea', {
+                  placeholder: '例如：原来锚定效应的本质是先入为主的认知偏差，应用到面试中……',
+                  value: reviewing?.takeaway ?? editingReview?.takeaway ?? '',
+                  onChange: e => {
+                    if(reviewing) setReviewing({ ...reviewing, takeaway: e.target.value });
+                    else setEditingReview({ ...editingReview, takeaway: e.target.value });
+                  }
+                })
+              ),
+              React.createElement('div', { className: 'field' },
+                React.createElement('label', null, '📝 复盘笔记（哪里讲得好/哪里卡壳/下次怎么改）'),
+                React.createElement('textarea', {
+                  placeholder: '例如：开头讲得太啰嗦，应该直接给定义；例子「寿光蔬菜滞销」讲得太细，超时了。',
+                  rows: 4,
+                  value: reviewing?.note ?? editingReview?.note ?? '',
+                  onChange: e => {
+                    if(reviewing) setReviewing({ ...reviewing, note: e.target.value });
+                    else setEditingReview({ ...editingReview, note: e.target.value });
+                  }
+                })
+              ),
+              React.createElement('div', { className: 'modal-actions' },
+                React.createElement('button', {
+                  className: 'btn btn-ghost',
+                  onClick: () => { setReviewing(null); setEditingReview(null); }
+                }, '取消'),
+                React.createElement('button', {
+                  className: 'btn btn-primary',
+                  onClick: () => {
+                    if(reviewing){
+                      if(!reviewing.takeaway.trim() && !reviewing.note.trim()){
+                        if(!confirm('收获和复盘都是空的，确定保存吗？')) return;
+                      }
+                      saveReview(reviewing);
+                    } else {
+                      // 更新已存在的
+                      const old = editingReview;
+                      setHistory(prev => {
+                        const list = prev[old.topicId] || [];
+                        const next = list.map(r => r.date === old.date ? { ...old } : r);
+                        return { ...prev, [old.topicId]: next };
+                      });
+                      setEditingReview(null);
+                    }
+                  }
+                }, '保存复盘')
+              )
+            )
+          )
+          : null;
+
+        // ────────────── Settings Modal ──────────────
+        const SettingsModal = settingsOpen
+          ? React.createElement('div', {
+              className: 'modal-backdrop open',
+              onClick: e => { if(e.target === e.currentTarget) setSettingsOpen(false); }
+            },
+            React.createElement('div', { className: 'modal' },
+              React.createElement('h2', null, '设置'),
+              React.createElement('p', { className: 'modal-topic' }, '准备时间和演讲时间'),
+              React.createElement('div', { className: 'field' },
+                React.createElement('label', null, '准备时间（分钟）'),
+                React.createElement('input', {
+                  type: 'range', min: 1, max: 60, step: 1, value: settings.prepMinutes,
+                  onChange: e => setSettings(s => ({ ...s, prepMinutes: +e.target.value }))
+                }),
+                React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', fontSize: '.8rem', color: 'var(--text-dim)', marginTop: 6 } },
+                  React.createElement('span', null, '1 分钟'),
+                  React.createElement('span', null, settings.prepMinutes + ' 分钟'),
+                  React.createElement('span', null, '60 分钟')
+                )
+              ),
+              React.createElement('div', { className: 'field' },
+                React.createElement('label', null, '演讲时间固定为 60 秒（不可调）')
+              ),
+              React.createElement('div', { className: 'field' },
+                React.createElement('label', { style: { display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' } },
+                  React.createElement('input', {
+                    type: 'checkbox', checked: !settings.muted,
+                    onChange: e => setSettings(s => ({ ...s, muted: !e.target.checked }))
+                  }),
+                  React.createElement('span', null, '启用提示音效')
+                )
+              ),
+              React.createElement('div', { className: 'modal-actions' },
+                React.createElement('button', { className: 'btn btn-primary', onClick: () => setSettingsOpen(false) }, '完成')
+              )
+            )
+          )
+          : null;
+
+        return React.createElement('div', { className: 'app' },
+          React.createElement('header', null,
+            React.createElement('h1', { className: 'brand' }, 'Speech'),
+            React.createElement('p', { className: 'credit' }, '即兴演讲练习')
+          ),
+
+          React.createElement('nav', { className: 'nav', 'aria-label': '视图切换' },
+            React.createElement('button', {
+              className: 'nav-btn' + (view === 'practice' ? ' active' : ''),
+              onClick: () => setView('practice')
+            }, '🎤 练习'),
+            React.createElement('button', {
+              className: 'nav-btn' + (view === 'history' ? ' active' : ''),
+              onClick: () => setView('history')
+            }, `📒 复盘记录${totalCount > 0 ? ' · ' + totalCount : ''}`)
+          ),
+
+          React.createElement('main', { className: 'panel' },
+            view === 'practice' ? PracticeView : HistoryView
+          ),
+
+          ReviewModal,
+          SettingsModal
+        );
+      }
+
+      createRoot(document.getElementById('root')).render(React.createElement(App));
+
+      // 注册 Service Worker（手机离线可用 + PWA）
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch(() => {});
+        });
+      }
+    </script>
+  </body>
+</html>
