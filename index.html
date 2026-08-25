@@ -830,6 +830,33 @@ button { -webkit-user-select: none; user-select: none; }
         const [settings, setSettings] = useState(loadSettings);
         const [history, setHistory] = useState(loadHistory); const [needPat, setNeedPat] = useState(!localStorage.getItem("omi_pat"));
         useEffect(() => { (async () => { const remote = await omiBoot(); if(remote && Object.keys(remote).length){ setHistory(h => { const m = {...h}; for(const k in remote){ if(!m[k]) m[k]=[]; const ids = new Set(remote[k].map(x=>x.id)); m[k] = [...remote[k], ...(h[k]||[]).filter(x=>!ids.has(x.id))]; } return m; }); } })(); }, []);
+        // O米补丁: 接收导入弹窗 postMessage，合并历史
+        useEffect(() => {
+          const handler = (e) => {
+            if (e.data && e.data.type === 'speech-import' && e.data.data) {
+              const incoming = e.data.data;
+              setHistory(h => {
+                const merged = { ...h };
+                let added = 0;
+                for (const tid in incoming) {
+                  const list = Array.isArray(incoming[tid]) ? incoming[tid] : [];
+                  if (!merged[tid]) merged[tid] = [];
+                  const existingDates = new Set(merged[tid].map(r => r.date));
+                  for (const r of list) {
+                    if (!existingDates.has(r.date)) {
+                      merged[tid].push(r);
+                      added++;
+                    }
+                  }
+                }
+                alert('✅ 合并完成，新增 ' + added + ' 条记录');
+                return merged;
+              });
+            }
+          };
+          window.addEventListener('message', handler);
+          return () => window.removeEventListener('message', handler);
+        }, []);
         const [reviewing, setReviewing] = useState(null); // 正在写的复盘条目
         const [editingReview, setEditingReview] = useState(null); // 编辑某条历史
         const tickRef = useRef(null);
@@ -846,8 +873,10 @@ button { -webkit-user-select: none; user-select: none; }
         useEffect(() => () => clearInterval(tickRef.current), []);
         useEffect(() => { saveSettings(settings); }, [settings]);
         useEffect(() => { saveHistory(history); }, [history]);
-        // O米补丁: 把 omiShowAns 挂到 window，方便 inline onclick
+        // O米补丁: 把 omiShowAns / omiExportHistory / omiImportHistory 挂到 window
         window.omiShowAns = omiShowAns;
+        window.omiExportHistory = omiExportHistory;
+        window.omiImportHistory = omiImportHistory;
 
         const reset = () => {
           clearInterval(tickRef.current);
@@ -1066,6 +1095,12 @@ button { -webkit-user-select: none; user-select: none; }
               React.createElement('p', { className: 'stat-label' }, '平均表现')
             )
           ),
+          // O米补丁: 导入/导出 工具栏
+          React.createElement('div', { style: {display: 'flex', gap: '8px', margin: '12px 0 16px', flexWrap: 'wrap'} },
+            React.createElement('button', { className: 'btn btn-ghost', onClick: () => window.omiExportHistory && window.omiExportHistory(history) }, '📤 导出配置'),
+            React.createElement('button', { className: 'btn btn-ghost', onClick: () => window.omiImportHistory && window.omiImportHistory() }, '📥 导入配置'),
+            React.createElement('button', { className: 'btn btn-ghost', onClick: () => { if(confirm('清空当前浏览器所有复盘记录？此操作不可撤销。')) { setHistory({}); alert('已清空'); } } }, '🗑 清空')
+          ),
           allReviews.length === 0
             ? React.createElement('div', { className: 'empty-state' },
                 React.createElement('div', { className: 'empty-state-icon' }, '📝'),
@@ -1077,7 +1112,8 @@ button { -webkit-user-select: none; user-select: none; }
                   className: 'history-item'
                 },
                   React.createElement('div', { className: 'history-item-head' },
-                    React.createElement('h3', { className: 'history-topic' }, r.title),
+                    React.createElement('h3', { className: 'history-topic' }, r.title || r.topicId),
+                    React.createElement('button', { className: 'btn btn-secondary', style: {marginTop: '6px', padding: '6px 12px', fontSize: '.8rem'}, onClick: () => window.omiShowAns && window.omiShowAns(r.topicId) }, '📖 查看标准答案'),
                     React.createElement('span', { className: 'history-date' }, new Date(r.date).toLocaleString('zh-CN'))
                   ),
                   React.createElement('div', { className: 'history-meta' },
@@ -1091,6 +1127,7 @@ button { -webkit-user-select: none; user-select: none; }
                     ? React.createElement('p', { className: 'history-snippet', style: { marginTop: 4 } }, '📝 ' + r.note)
                     : null,
                   React.createElement('div', { className: 'history-actions' },
+                    React.createElement('button', { className: 'btn btn-ghost', onClick: () => window.omiShowAns && window.omiShowAns(r.topicId) }, '查看标准答案'),
                     React.createElement('button', { className: 'btn btn-ghost', onClick: () => setEditingReview(r) }, '编辑'),
                     React.createElement('button', {
                       className: 'btn btn-ghost',
@@ -1110,8 +1147,8 @@ button { -webkit-user-select: none; user-select: none; }
             React.createElement('div', { className: 'modal', role: 'dialog', 'aria-modal': 'true' },
               React.createElement('h2', null, reviewing ? '复盘这次演讲' : '编辑复盘'),
               React.createElement('p', { className: 'modal-topic' },
-                React.createElement('strong', null, reviewing.title),
-                reviewing.hint ? ' — ' + reviewing.hint : ''
+                React.createElement('strong', null, (reviewing || editingReview).title),
+                (reviewing || editingReview).hint ? ' — ' + (reviewing || editingReview).hint : ''
               ),
               React.createElement('div', { className: 'field' },
                 React.createElement('label', null, '本次表现评分'),
