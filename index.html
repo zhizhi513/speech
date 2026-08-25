@@ -182,6 +182,96 @@ button { -webkit-user-select: none; user-select: none; }
       import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
 
       // ────────────────────────── 词库（分组）─────────────────────────
+
+      // ===== O米补丁: GitHub history 同步 + 答案按需加载 =====
+      const OMI_PAT = localStorage.getItem("omi_pat") || ""; /* 首次打开会弹窗要求填 PAT */
+      const OMI_REPO = "zhizhi513/speech-data";
+      const OMI_HIST = "history.json";
+      const OMI_API = "https://api.github.com";
+      const OMI_BASE = "https://zhizhi513.github.io/speech/answers/";
+
+      function omiFile(id){ return encodeURIComponent(id + ".md"); }
+
+      function omiRender(md){
+        const e = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+        let h = e(md);
+        h = h.replace(/^### (.+)$/gm, "<h4>$1</h4>");
+        h = h.replace(/^## (.+)$/gm, "<h3>$1</h3>");
+        h = h.replace(/^# (.+)$/gm, "<h2>$1</h2>");
+        h = h.replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>");
+        h = h.replace(/**(.+?)**/g, "<strong>$1</strong>");
+        h = h.replace(/^---$/gm, "<hr/>");
+        h = h.replace(/
+
+/g, "<br/><br/>");
+        h = h.replace(/
+/g, "<br/>");
+        return h;
+      }
+
+      let omiSyncT = null, omiSyncD = null;
+      async function omiSync(hist){
+        if(omiSyncT) clearTimeout(omiSyncT);
+        omiSyncD = hist;
+        return new Promise(r => {
+          omiSyncT = setTimeout(async () => {
+            const data = omiSyncD;
+            try {
+              const g = await fetch(OMI_API + "/repos/" + OMI_REPO + "/contents/" + OMI_HIST, {
+                headers: { "Authorization": "token " + OMI_PAT, "User-Agent": "speech" }
+              });
+              let sha = null;
+              if(g.ok){ sha = (await g.json()).sha; }
+              const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+              const body = { message: "upd " + new Date().toISOString(), content, sha: sha||undefined };
+              const p = await fetch(OMI_API + "/repos/" + OMI_REPO + "/contents/" + OMI_HIST, {
+                method: "PUT",
+                headers: { "Authorization": "token " + OMI_PAT, "Content-Type": "application/json", "User-Agent": "speech" },
+                body: JSON.stringify(body)
+              });
+              if(p.ok) console.log("✅ synced"); else console.warn("❌", await p.text());
+              r(p.ok);
+            } catch(e){ console.warn("sync err:", e.message); r(false); }
+          }, 1500);
+        });
+      }
+
+      async function omiBoot(){
+        try {
+          const r = await fetch(OMI_API + "/repos/" + OMI_REPO + "/contents/" + OMI_HIST, {
+            headers: { "Authorization": "token " + OMI_PAT, "User-Agent": "speech" }
+          });
+          if(!r.ok) return null;
+          const meta = await r.json();
+          const txt = decodeURIComponent(escape(atob(meta.content.replace(/
+/g,""))));
+          return JSON.parse(txt);
+        } catch(e){ return null; }
+      }
+
+      async function omiShowAns(id, btn){
+        const cached = localStorage.getItem("ans:" + id);
+        let md = cached;
+        if(!md){
+          btn.disabled = true; btn.textContent = "加载中…";
+          try {
+            const r = await fetch(OMI_BASE + omiFile(id));
+            if(!r.ok) throw new Error("HTTP " + r.status);
+            md = await r.text();
+            localStorage.setItem("ans:" + id, md);
+          } catch(e){
+            btn.disabled = false; btn.textContent = "📖 标准答案（重试）";
+            alert("加载失败：" + e.message + "\n\n网络问题或文件不存在");
+            return;
+          }
+          btn.disabled = false; btn.textContent = "📖 标准答案";
+        }
+        const w = window.open("", "_blank", "width=600,height=720");
+        if(!w){ alert("浏览器拦截了弹窗，请允许弹窗"); return; }
+        w.document.write("<!DOCTYPE html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>" + id + " - 标准答案</title><style>body{font-family:-apple-system,system-ui,sans-serif;max-width:680px;margin:24px auto;padding:0 20px;line-height:1.8;color:#1a1a1a;background:#fafaf7;}h2{color:#d97757;}h3,h4{color:#9b9b9b;margin-top:1.5em;}blockquote{border-left:3px solid #d97757;padding:8px 14px;color:#6b6b6b;background:#f5f4ef;margin:12px 0;}strong{color:#1a1a1a;}hr{border:none;border-top:1px dashed #d4d0c4;margin:24px 0;}a{color:#d97757;}</style></head><body>" + omiRender(md) + "</body></html>");
+        w.document.close();
+      }
+
       const LIBRARIES = [
         {
           id: 'ai', name: '人工智能', icon: '✦',
@@ -711,6 +801,7 @@ button { -webkit-user-select: none; user-select: none; }
       }
       function saveHistory(h){
         try{ localStorage.setItem('quickask-clone-history', JSON.stringify(h)); }catch{}
+        omiSync(h);
       }
 
       let audioCtx = null;
@@ -741,7 +832,8 @@ button { -webkit-user-select: none; user-select: none; }
         const [seconds, setSeconds] = useState(0);
         const [settingsOpen, setSettingsOpen] = useState(false);
         const [settings, setSettings] = useState(loadSettings);
-        const [history, setHistory] = useState(loadHistory);
+        const [history, setHistory] = useState(loadHistory); const [needPat, setNeedPat] = useState(!localStorage.getItem("omi_pat"));
+        useEffect(() => { (async () => { const remote = await omiBoot(); if(remote && Object.keys(remote).length){ setHistory(h => { const m = {...h}; for(const k in remote){ if(!m[k]) m[k]=[]; const ids = new Set(remote[k].map(x=>x.id)); m[k] = [...remote[k], ...(h[k]||[]).filter(x=>!ids.has(x.id))]; } return m; }); } })(); }, []);
         const [reviewing, setReviewing] = useState(null); // 正在写的复盘条目
         const [editingReview, setEditingReview] = useState(null); // 编辑某条历史
         const tickRef = useRef(null);
@@ -758,6 +850,8 @@ button { -webkit-user-select: none; user-select: none; }
         useEffect(() => () => clearInterval(tickRef.current), []);
         useEffect(() => { saveSettings(settings); }, [settings]);
         useEffect(() => { saveHistory(history); }, [history]);
+        // O米补丁: 把 omiShowAns 挂到 window，方便 inline onclick
+        window.omiShowAns = omiShowAns;
 
         const reset = () => {
           clearInterval(tickRef.current);
@@ -915,6 +1009,7 @@ button { -webkit-user-select: none; user-select: none; }
               ? React.createElement(React.Fragment, null,
                   React.createElement('h2', { className: 'topic-title' }, topic.title),
                   React.createElement('p', { className: 'topic-hint' }, topic.hint),
+                  React.createElement('div', { style: {marginTop: '12px'} }, React.createElement('button', { className: 'btn btn-secondary', onClick: () => window.omiShowAns && window.omiShowAns(topic.id) }, '查看标准答案')),
                   history[topic.id] && history[topic.id].length > 0
                     ? React.createElement('p', { style: { marginTop: 12, fontSize: '.85rem', color: 'var(--success)' } },
                         `✓ 已演讲 ${history[topic.id].length} 次`)
