@@ -1,5 +1,5 @@
-// Speech PWA Service Worker - 让姐姐手机没网也能用
-const CACHE = 'speech-v1';
+// Speech PWA Service Worker - v2 (修正缓存版本号强制更新)
+const CACHE = 'speech-v2';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -9,7 +9,6 @@ const CORE_ASSETS = [
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(cache => {
-      // 预缓存核心页面（answers 文件很多，先不全缓存，按需缓存）
       return cache.addAll(['./', './index.html']);
     })
   );
@@ -20,16 +19,13 @@ self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys => Promise.all(
       keys.filter(k => k !== CACHE).map(k => caches.delete(k))
-    ))
+    )).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// 缓存优先（cache-first），离线可用
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // CDN 字体和 React：网络优先，缓存兜底
   if (url.host !== location.host) {
     e.respondWith(
       fetch(e.request).then(res => {
@@ -41,23 +37,19 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // 本地资源（index.html 和 answers/）：缓存优先
+  // 本地资源：网络优先，缓存兜底（这样更新能立即生效）
   e.respondWith(
-    caches.match(e.request).then(cached => {
+    fetch(e.request).then(res => {
+      if (e.request.method === 'GET' && res.ok) {
+        const c = res.clone();
+        caches.open(CACHE).then(cache => cache.put(e.request, c));
+      }
+      return res;
+    }).catch(() => caches.match(e.request).then(cached => {
       if (cached) return cached;
-      return fetch(e.request).then(res => {
-        // 只缓存 GET 成功的 md/html
-        if (e.request.method === 'GET' && res.ok) {
-          const c = res.clone();
-          caches.open(CACHE).then(cache => cache.put(e.request, c));
-        }
-        return res;
-      }).catch(() => {
-        // 离线兜底
-        if (e.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-      });
-    })
+      if (e.request.mode === 'navigate') {
+        return caches.match('./index.html');
+      }
+    }))
   );
 });
