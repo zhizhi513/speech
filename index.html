@@ -183,89 +183,147 @@ button { -webkit-user-select: none; user-select: none; }
 
       // ────────────────────────── 词库（分组）─────────────────────────
 
-      // ===== O米补丁: GitHub history 同步 + 答案按需加载 =====
-      const OMI_PAT = localStorage.getItem("omi_pat") || ""; /* 首次打开会弹窗要求填 PAT */
-      const OMI_REPO = "zhizhi513/speech-data";
-      const OMI_HIST = "history.json";
-      const OMI_API = "https://api.github.com";
-      const OMI_BASE = "https://zhizhi513.github.io/speech/answers/";
+      // 标准答案从部署目录里的 answers/*.md 加载。
+      const ANSWER_BASE = './answers/';
+      const ANSWER_ALIASES = {
+        'A/B 测试': 'A_B测试',
+        'CI/CD': 'CI_CD'
+      };
 
-      function omiFile(id){ return encodeURIComponent(id + ".md"); }
-
-      function omiRender(md){
-        const e = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-        let h = e(md);
-        h = h.replace(/^### (.+)$/gm, "<h4>$1</h4>");
-        h = h.replace(/^## (.+)$/gm, "<h3>$1</h3>");
-        h = h.replace(/^# (.+)$/gm, "<h2>$1</h2>");
-        h = h.replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>");
-        h = h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-        h = h.replace(/^---$/gm, "<hr/>");
-        h = h.replace(/\n\n/g, "<br/><br/>");
-        h = h.replace(/\n/g, "<br/>");
+      function answerFile(id){ return encodeURIComponent((ANSWER_ALIASES[id] || id) + '.md'); }
+      function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+      function renderMarkdown(md){
+        let h = escapeHtml(md);
+        h = h.replace(/^### (.+)$/gm, '<h4>$1</h4>');
+        h = h.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+        h = h.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+        h = h.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+        h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        h = h.replace(/^---$/gm, '<hr/>');
+        h = h.replace(/\n\n/g, '<br/><br/>');
+        h = h.replace(/\n/g, '<br/>');
         return h;
       }
 
-      let omiSyncT = null, omiSyncD = null;
-      async function omiSync(hist){
-        if(omiSyncT) clearTimeout(omiSyncT);
-        omiSyncD = hist;
-        return new Promise(r => {
-          omiSyncT = setTimeout(async () => {
-            const data = omiSyncD;
-            try {
-              const g = await fetch(OMI_API + "/repos/" + OMI_REPO + "/contents/" + OMI_HIST, {
-                headers: { "Authorization": "token " + OMI_PAT, "User-Agent": "speech" }
-              });
-              let sha = null;
-              if(g.ok){ sha = (await g.json()).sha; }
-              const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
-              const body = { message: "upd " + new Date().toISOString(), content, sha: sha||undefined };
-              const p = await fetch(OMI_API + "/repos/" + OMI_REPO + "/contents/" + OMI_HIST, {
-                method: "PUT",
-                headers: { "Authorization": "token " + OMI_PAT, "Content-Type": "application/json", "User-Agent": "speech" },
-                body: JSON.stringify(body)
-              });
-              if(p.ok) console.log("✅ synced"); else console.warn("❌", await p.text());
-              r(p.ok);
-            } catch(e){ console.warn("sync err:", e.message); r(false); }
-          }, 1500);
-        });
-      }
-
-      async function omiBoot(){
+      async function showStandardAnswer(id, btn){
+        const oldText = btn?.textContent;
+        let md = '';
+        if(btn){ btn.disabled = true; btn.textContent = '加载中…'; }
         try {
-          const r = await fetch(OMI_API + "/repos/" + OMI_REPO + "/contents/" + OMI_HIST, {
-            headers: { "Authorization": "token " + OMI_PAT, "User-Agent": "speech" }
-          });
-          if(!r.ok) return null;
-          const meta = await r.json();
-          const txt = decodeURIComponent(escape(atob(meta.content.replace(/\n/g,""))));
-          return JSON.parse(txt);
-        } catch(e){ return null; }
+          const r = await fetch(ANSWER_BASE + answerFile(id), { cache: 'no-cache' });
+          if(!r.ok) throw new Error('HTTP ' + r.status);
+          md = await r.text();
+        } catch(e){
+          alert('暂无或无法加载「' + id + '」的标准答案');
+          if(btn){ btn.disabled = false; btn.textContent = oldText || '查看标准答案'; }
+          return;
+        }
+        if(btn){ btn.disabled = false; btn.textContent = oldText || '查看标准答案'; }
+        const w = window.open('', '_blank', 'width=600,height=720');
+        if(!w){ alert('浏览器拦截了弹窗，请允许弹窗'); return; }
+        w.document.write('<!DOCTYPE html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>' + escapeHtml(id) + ' - 标准答案</title><style>body{font-family:-apple-system,system-ui,sans-serif;max-width:680px;margin:24px auto;padding:0 20px;line-height:1.8;color:#1a1a1a;background:#fafaf7;}h2{color:#d97757;}h3,h4{color:#9b9b9b;margin-top:1.5em;}blockquote{border-left:3px solid #d97757;padding:8px 14px;color:#6b6b6b;background:#f5f4ef;margin:12px 0;}strong{color:#1a1a1a;}hr{border:none;border-top:1px dashed #d4d0c4;margin:24px 0;}a{color:#d97757;}</style></head><body>' + renderMarkdown(md) + '</body></html>');
+        w.document.close();
       }
 
-      async function omiShowAns(id, btn){
-        const cached = localStorage.getItem("ans:" + id);
-        let md = cached;
-        if(!md){
-          btn.disabled = true; btn.textContent = "加载中…";
-          try {
-            const r = await fetch(OMI_BASE + omiFile(id));
-            if(!r.ok) throw new Error("HTTP " + r.status);
-            md = await r.text();
-            localStorage.setItem("ans:" + id, md);
-          } catch(e){
-            btn.disabled = false; btn.textContent = "📖 标准答案（重试）";
-            alert("加载失败：" + e.message + "\n\n网络问题或文件不存在");
-            return;
-          }
-          btn.disabled = false; btn.textContent = "📖 标准答案";
+      async function exportLocalData(history, settings) {
+        const payload = {
+          app: 'speech',
+          version: 2,
+          exportedAt: new Date().toISOString(),
+          history,
+          settings
+        };
+        const json = JSON.stringify(payload, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        try { await navigator.clipboard?.writeText(json); } catch(e) {}
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'speech-records-' + new Date().toISOString().slice(0,10) + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        const w = window.open('', '_blank', 'width=600,height=600');
+        if (w) {
+          w.document.write('<!DOCTYPE html><html><head><meta charset=utf-8><title>导出 Speech 记录</title><style>body{font-family:-apple-system,system-ui,sans-serif;padding:20px;background:#fafaf7;color:#1a1a1a;}textarea{width:100%;height:78vh;font-size:12px;border:1px solid #ddd;border-radius:8px;padding:12px;background:#fff;color:#1a1a1a;font-family:monospace}.ok{color:#3a8c5a;font-weight:bold;margin-bottom:12px}.tip{color:#666;font-size:.85rem;margin-top:12px}</style></head><body><div class=ok>已下载导出文件，并尝试复制到剪贴板</div><p class=tip>如需手动复制，全选下面文本框内容即可：</p><textarea readonly>' + escapeHtml(json) + '</textarea></body></html>');
+          w.document.close();
         }
-        const w = window.open("", "_blank", "width=600,height=720");
-        if(!w){ alert("浏览器拦截了弹窗，请允许弹窗"); return; }
-        w.document.write("<!DOCTYPE html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>" + id + " - 标准答案</title><style>body{font-family:-apple-system,system-ui,sans-serif;max-width:680px;margin:24px auto;padding:0 20px;line-height:1.8;color:#1a1a1a;background:#fafaf7;}h2{color:#d97757;}h3,h4{color:#9b9b9b;margin-top:1.5em;}blockquote{border-left:3px solid #d97757;padding:8px 14px;color:#6b6b6b;background:#f5f4ef;margin:12px 0;}strong{color:#1a1a1a;}hr{border:none;border-top:1px dashed #d4d0c4;margin:24px 0;}a{color:#d97757;}</style></head><body>" + omiRender(md) + "</body></html>");
-        w.document.close();
+      }
+
+      function pickImportFile(onImport) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json,application/json';
+        input.style.display = 'none';
+        input.addEventListener('change', async () => {
+          const file = input.files && input.files[0];
+          if(!file){ input.remove(); return; }
+          try {
+            onImport(JSON.parse(await file.text()));
+          } catch(e) {
+            alert('导入失败：' + e.message);
+          } finally {
+            input.remove();
+          }
+        });
+        document.body.appendChild(input);
+        input.click();
+      }
+
+      function normalizeImportedData(payload) {
+        const source = payload && payload.history ? payload.history : payload;
+        if(!source || typeof source !== 'object' || Array.isArray(source)) throw new Error('文件格式不正确');
+        const history = {};
+        Object.entries(source).forEach(([topicId, reviews]) => {
+          if(!Array.isArray(reviews)) return;
+          const list = reviews
+            .filter(r => r && typeof r === 'object')
+            .map(r => ({
+              ...r,
+              topicId: r.topicId || topicId,
+              title: typeof r.title === 'string' && r.title ? r.title : topicId,
+              hint: typeof r.hint === 'string' ? r.hint : '',
+              date: typeof r.date === 'string' && r.date ? r.date : new Date().toISOString(),
+              score: Number.isFinite(Number(r.score)) ? Number(r.score) : 0,
+              takeaway: typeof r.takeaway === 'string' ? r.takeaway : '',
+              note: typeof r.note === 'string' ? r.note : ''
+            }));
+          if(list.length) history[topicId] = list;
+        });
+        return {
+          history,
+          settings: payload && payload.settings && typeof payload.settings === 'object' ? payload.settings : null
+        };
+      }
+
+      function normalizeSettings(raw) {
+        if(!raw || typeof raw !== 'object') return null;
+        const next = {};
+        const prep = Number(raw.prepMinutes);
+        if(Number.isFinite(prep) && prep > 0 && prep <= 60) next.prepMinutes = prep;
+        if(typeof raw.muted === 'boolean') next.muted = raw.muted;
+        return Object.keys(next).length ? next : null;
+      }
+
+      function mergeHistory(current, incoming) {
+        const merged = { ...current };
+        let added = 0;
+        Object.entries(incoming).forEach(([topicId, reviews]) => {
+          const nextList = Array.isArray(merged[topicId]) ? [...merged[topicId]] : [];
+          const seen = new Set(nextList.map(r => r && (r.date || r.id || JSON.stringify([r.title, r.takeaway, r.note]))));
+          reviews.forEach(r => {
+            const key = r.date || r.id || JSON.stringify([r.title, r.takeaway, r.note]);
+            if(seen.has(key)) return;
+            nextList.push(r);
+            seen.add(key);
+            added++;
+          });
+          merged[topicId] = nextList.sort((a, b) => new Date(b.date) - new Date(a.date));
+        });
+        return { history: merged, added };
       }
 
       const LIBRARIES = [
@@ -797,7 +855,6 @@ button { -webkit-user-select: none; user-select: none; }
       }
       function saveHistory(h){
         try{ localStorage.setItem('quickask-clone-history', JSON.stringify(h)); }catch{}
-        omiSync(h);
       }
 
       let audioCtx = null;
@@ -828,35 +885,7 @@ button { -webkit-user-select: none; user-select: none; }
         const [seconds, setSeconds] = useState(0);
         const [settingsOpen, setSettingsOpen] = useState(false);
         const [settings, setSettings] = useState(loadSettings);
-        const [history, setHistory] = useState(loadHistory); const [needPat, setNeedPat] = useState(!localStorage.getItem("omi_pat"));
-        useEffect(() => { (async () => { const remote = await omiBoot(); if(remote && Object.keys(remote).length){ setHistory(h => { const m = {...h}; for(const k in remote){ if(!m[k]) m[k]=[]; const ids = new Set(remote[k].map(x=>x.id)); m[k] = [...remote[k], ...(h[k]||[]).filter(x=>!ids.has(x.id))]; } return m; }); } })(); }, []);
-        // O米补丁: 接收导入弹窗 postMessage，合并历史
-        useEffect(() => {
-          const handler = (e) => {
-            if (e.data && e.data.type === 'speech-import' && e.data.data) {
-              const incoming = e.data.data;
-              setHistory(h => {
-                const merged = { ...h };
-                let added = 0;
-                for (const tid in incoming) {
-                  const list = Array.isArray(incoming[tid]) ? incoming[tid] : [];
-                  if (!merged[tid]) merged[tid] = [];
-                  const existingDates = new Set(merged[tid].map(r => r.date));
-                  for (const r of list) {
-                    if (!existingDates.has(r.date)) {
-                      merged[tid].push(r);
-                      added++;
-                    }
-                  }
-                }
-                alert('✅ 合并完成，新增 ' + added + ' 条记录');
-                return merged;
-              });
-            }
-          };
-          window.addEventListener('message', handler);
-          return () => window.removeEventListener('message', handler);
-        }, []);
+        const [history, setHistory] = useState(loadHistory);
         const [reviewing, setReviewing] = useState(null); // 正在写的复盘条目
         const [editingReview, setEditingReview] = useState(null); // 编辑某条历史
         const tickRef = useRef(null);
@@ -873,11 +902,6 @@ button { -webkit-user-select: none; user-select: none; }
         useEffect(() => () => clearInterval(tickRef.current), []);
         useEffect(() => { saveSettings(settings); }, [settings]);
         useEffect(() => { saveHistory(history); }, [history]);
-        // O米补丁: 把 omiShowAns / omiExportHistory / omiImportHistory 挂到 window
-        window.omiShowAns = omiShowAns;
-        window.omiExportHistory = omiExportHistory;
-        window.omiImportHistory = omiImportHistory;
-
         const reset = () => {
           clearInterval(tickRef.current);
           setPhase('idle');
@@ -990,6 +1014,21 @@ button { -webkit-user-select: none; user-select: none; }
           return arr.sort((a, b) => new Date(b.date) - new Date(a.date));
         }, [history]);
 
+        const importLocalData = () => {
+          pickImportFile((payload) => {
+            try {
+              const imported = normalizeImportedData(payload);
+              const result = mergeHistory(history, imported.history);
+              setHistory(result.history);
+              const nextSettings = normalizeSettings(imported.settings);
+              if(nextSettings) setSettings(prev => ({ ...prev, ...nextSettings }));
+              alert('导入完成，新增 ' + result.added + ' 条复盘记录');
+            } catch(e) {
+              alert('导入失败：' + e.message);
+            }
+          });
+        };
+
         const done = phase === 'done';
         const showTimer = phase !== 'idle';
         let label = '', timerSeconds = 0, timerTotal = 0;
@@ -1034,7 +1073,7 @@ button { -webkit-user-select: none; user-select: none; }
               ? React.createElement(React.Fragment, null,
                   React.createElement('h2', { className: 'topic-title' }, topic.title),
                   React.createElement('p', { className: 'topic-hint' }, topic.hint),
-                  React.createElement('div', { style: {marginTop: '12px'} }, React.createElement('button', { className: 'btn btn-secondary', onClick: () => window.omiShowAns && window.omiShowAns(topic.id) }, '查看标准答案')),
+                  React.createElement('div', { style: {marginTop: '12px'} }, React.createElement('button', { className: 'btn btn-secondary', onClick: (e) => showStandardAnswer(topic.id, e.currentTarget) }, '查看标准答案')),
                   history[topic.id] && history[topic.id].length > 0
                     ? React.createElement('p', { style: { marginTop: 12, fontSize: '.85rem', color: 'var(--success)' } },
                         `✓ 已演讲 ${history[topic.id].length} 次`)
@@ -1095,10 +1134,9 @@ button { -webkit-user-select: none; user-select: none; }
               React.createElement('p', { className: 'stat-label' }, '平均表现')
             )
           ),
-          // O米补丁: 导入/导出 工具栏
           React.createElement('div', { style: {display: 'flex', gap: '8px', margin: '12px 0 16px', flexWrap: 'wrap'} },
-            React.createElement('button', { className: 'btn btn-ghost', onClick: () => window.omiExportHistory && window.omiExportHistory(history) }, '📤 导出配置'),
-            React.createElement('button', { className: 'btn btn-ghost', onClick: () => window.omiImportHistory && window.omiImportHistory() }, '📥 导入配置'),
+            React.createElement('button', { className: 'btn btn-ghost', onClick: () => exportLocalData(history, settings) }, '📤 导出记录'),
+            React.createElement('button', { className: 'btn btn-ghost', onClick: importLocalData }, '📥 导入记录'),
             React.createElement('button', { className: 'btn btn-ghost', onClick: () => { if(confirm('清空当前浏览器所有复盘记录？此操作不可撤销。')) { setHistory({}); alert('已清空'); } } }, '🗑 清空')
           ),
           allReviews.length === 0
@@ -1113,7 +1151,7 @@ button { -webkit-user-select: none; user-select: none; }
                 },
                   React.createElement('div', { className: 'history-item-head' },
                     React.createElement('h3', { className: 'history-topic' }, r.title || r.topicId),
-                    React.createElement('button', { className: 'btn btn-secondary', style: {marginTop: '6px', padding: '6px 12px', fontSize: '.8rem'}, onClick: () => window.omiShowAns && window.omiShowAns(r.topicId) }, '📖 查看标准答案'),
+                    React.createElement('button', { className: 'btn btn-secondary', style: {marginTop: '6px', padding: '6px 12px', fontSize: '.8rem'}, onClick: (e) => showStandardAnswer(r.topicId, e.currentTarget) }, '📖 查看标准答案'),
                     React.createElement('span', { className: 'history-date' }, new Date(r.date).toLocaleString('zh-CN'))
                   ),
                   React.createElement('div', { className: 'history-meta' },
@@ -1127,7 +1165,7 @@ button { -webkit-user-select: none; user-select: none; }
                     ? React.createElement('p', { className: 'history-snippet', style: { marginTop: 4 } }, '📝 ' + r.note)
                     : null,
                   React.createElement('div', { className: 'history-actions' },
-                    React.createElement('button', { className: 'btn btn-ghost', onClick: () => window.omiShowAns && window.omiShowAns(r.topicId) }, '查看标准答案'),
+                    React.createElement('button', { className: 'btn btn-ghost', onClick: (e) => showStandardAnswer(r.topicId, e.currentTarget) }, '查看标准答案'),
                     React.createElement('button', { className: 'btn btn-ghost', onClick: () => setEditingReview(r) }, '编辑'),
                     React.createElement('button', {
                       className: 'btn btn-ghost',
@@ -1269,28 +1307,6 @@ button { -webkit-user-select: none; user-select: none; }
           : null;
 
         return React.createElement('div', { className: 'app' },
-          // O米补丁: PAT 输入弹窗（首次打开需要填 GitHub PAT 才能同步 history）
-          needPat && React.createElement('div', { className: 'modal-overlay', onClick: () => {} },
-            React.createElement('div', { className: 'modal-card', style: {maxWidth: '480px', padding: '24px'} },
-              React.createElement('h3', { style: {margin: '0 0 12px', color: 'var(--text)'} }, '\ud83d\udd10 首次配置'),
-              React.createElement('p', { style: {fontSize: '.9rem', color: 'var(--text-muted)', margin: '0 0 16px', lineHeight: '1.6'} },
-                '跨设备同步需要 GitHub PAT（个人令牌）。填一次后存到浏览器，以后不再问。不填也能用，只是不能跨设备。'),
-              React.createElement('input', {
-                id: 'pat-input',
-                type: 'password',
-                placeholder: 'ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-                style: {width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '.9rem', fontFamily: 'monospace', background: 'var(--surface)', color: 'var(--text)', boxSizing: 'border-box'},
-                defaultValue: ''
-              }),
-              React.createElement('div', { style: {display: 'flex', gap: '8px', marginTop: '16px', justifyContent: 'flex-end'} },
-                React.createElement('button', { className: 'btn btn-ghost', onClick: () => { localStorage.setItem('omi_pat_skip', '1'); setNeedPat(false); } }, '跳过'),
-                React.createElement('button', { className: 'btn btn-primary', onClick: () => { const v = (document.getElementById('pat-input')||{}).value || ''; if(v && v.startsWith('ghp_')){ localStorage.setItem('omi_pat', v); setNeedPat(false); alert('✅ PAT 已保存'); } else { alert('请填入有效的 PAT（ghp_ 开头）'); } } }, '保存同步')
-              ),
-              React.createElement('p', { style: {fontSize: '.75rem', color: 'var(--text-muted)', margin: '12px 0 0', lineHeight: '1.5'} },
-                '👉 PAT 在 https://github.com/settings/tokens/new 创建，加权限只勾 repo，仅用于同步你自己的记录。')
-            )
-          ),
-
           React.createElement('header', null,
             React.createElement('h1', { className: 'brand' }, 'Speech'),
             React.createElement('p', { className: 'credit' }, '即兴演讲练习')

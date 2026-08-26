@@ -1,5 +1,5 @@
-// Speech PWA Service Worker - v2 (修正缓存版本号强制更新)
-const CACHE = 'speech-v2';
+// Speech PWA Service Worker - v3
+const CACHE = 'speech-v3';
 const CORE_ASSETS = [
   './',
   './index.html',
